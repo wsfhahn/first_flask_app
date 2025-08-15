@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wikipedia Search & Summarizer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Background blur effect */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="20" cy="20" r="3" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="80" r="4" fill="rgba(255,255,255,0.1)"/></svg>');
+            filter: blur(30px);
+            z-index: -1;
+        }
+
+        .container {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            max-width: 1400px;
+            width: 100%;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 
+                0 8px 32px rgba(31, 38, 135, 0.37),
+                0 3px 6px rgba(0, 0, 0, 0.1),
+                0 1px 4px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            flex: 1;
+            min-width: 300px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .panel:hover {
+            transform: translateY(-5px);
+            box-shadow: 
+                0 12px 40px rgba(31, 38, 135, 0.45),
+                0 4px 8px rgba(0, 0, 0, 0.15),
+                0 2px 6px rgba(0, 0, 0, 0.12);
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            font-size: 2.5rem;
+        }
+
+        h2 {
+            color: white;
+            margin-bottom: 20px;
+            font-weight: 500;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 3px;
+        }
+
+        .search-box {
+            display: flex;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 50px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .search-box:hover {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        #search-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        #search-input:focus {
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.3);
+        }
+
+        #search-button {
+            padding: 15px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #search-button:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        #search-button:active {
+            transform: translateY(0);
+        }
+
+        .result-item {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .result-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(5px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .error {
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.15);
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 10px;
+            border-left: 4px solid #ff6b6b;
+            backdrop-filter: blur(5px);
+        }
+
+        .loading {
+            color: rgba(255, 255, 255, 0.8);
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .summary-content {
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .panel {
+                padding: 20px;
+            }
+            
+            .search-box {
+                flex-direction: column;
+                border-radius: 15px;
+            }
+            
+            #search-button {
+                padding: 15px;
+                border-radius: 0 0 15px 15px;
+            }
+        }
+
+        /* Animation for results */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-item {
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        .result-item:nth-child(1) { animation-delay: 0.1s; }
+        .result-item:nth-child(2) { animation-delay: 0.2s; }
+        .result-item:nth-child(3) { animation-delay: 0.3s; }
+        .result-item:nth-child(4) { animation-delay: 0.4s; }
+        .result-item:nth-child(5) { animation-delay: 0.5s; }
+
+        /* Icon styling */
+        .panel i {
+            margin-right: 8px;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <h1><i class="fas fa-search"></i> Wikipedia Explorer</h1>
+    
+    <div class="container">
+        <!-- Search Panel -->
+        <div class="panel">
+            <h2><i class="fas fa-magnifying-glass"></i> Search Wikipedia</h2>
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Enter search term...">
+                <button id="search-button"><i class="fas fa-search"></i> Search</button>
+            </div>
+            <div id="search-results"></div>
+        </div>
+        
+        <!-- Summary Panel -->
+        <div class="panel">
+            <h2><i class="fas fa-book-open"></i> Summary</h2>
+            <div id="summary-content">
+                <p><i class="fas fa-info-circle"></i> Select a result from the search panel to view its summary</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById('search-input');
+        const searchButton = document.getElementById('search-button');
+        const searchResults = document.getElementById('search-results');
+        const summaryContent = document.getElementById('summary-content');
+
+        // Search functionality
+        searchButton.addEventListener('click', performSearch);
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') performSearch();
+        });
+
+        function performSearch() {
+            const searchTerm = searchInput.value.trim();
+            if (!searchTerm) return;
+
+            // Show loading state
+            searchResults.innerHTML = '<p class="loading"><i class="fas fa-spinner fa-spin"></i> Searching...</p>';
+            
+            fetch('http://127.0.0.1:5000/api/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ term: searchTerm })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    searchResults.innerHTML = `<div class="error"><i class="fas fa-exclamation-triangle"></i> Error: ${data.error}</div>`;
+                } else {
+                    displayResults(data.results);
+                }
+            })
+            .catch(error => {
+                searchResults.innerHTML = `<div class="error"><i class="fas fa-exclamation-circle"></i> Network error: ${error.message}</div>`;
+            });
+        }
+
+        function displayResults(results) {
+            if (!results || results.length === 0) {
+                searchResults.innerHTML = '<p><i class="fas fa-info-circle"></i> No results found</p>';
+                return;
+            }
+
+            searchResults.innerHTML = '';
+            results.forEach((result, index) => {
+                const resultElement = document.createElement('div');
+                resultElement.className = 'result-item';
+                resultElement.textContent = result;
+                resultElement.style.animationDelay = `${index * 0.1}s`;
+                resultElement.addEventListener('click', () => {
+                    summarizePage(result);
+                });
+                searchResults.appendChild(resultElement);
+            });
+        }
+
+        function summarizePage(title) {
+            // Show loading state
+            summaryContent.innerHTML = '<p class="loading"><i class="fas fa-spinner fa-spin"></i> Summarizing...</p>';
+            
+            fetch('http://127.0.0.1:5000/api/summarize', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ title: title })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    summaryContent.innerHTML = `<div class="error"><i class="fas fa-exclamation-triangle"></i> Error: ${data.error}</div>`;
+                } else {
+                    summaryContent.innerHTML = `<div class="summary-content">${data.summary}</div>`;
+                }
+            })
+            .catch(error => {
+                summaryContent.innerHTML = `<div class="error"><i class="fas fa-exclamation-circle"></i> Network error: ${error.message}</div>`;
+            });
+        }
+    </script>
+</body>
+</html>

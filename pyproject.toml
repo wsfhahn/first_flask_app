@@ -1,0 +1,18 @@
+[project]
+name = "first-flask-app"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "dotenv>=0.9.9",
+    "flask>=3.1.1",
+    "flask-cors>=6.0.1",
+    "mypy>=1.17.1",
+    "openai>=1.99.9",
+    "wikipedia>=1.4.0",
+]
+
+[tool.mypy]
+strict=true
+ignore_missing_imports=true
